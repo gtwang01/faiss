@@ -20,8 +20,7 @@ runs:
       with:
         python-version: '3.11'
         miniconda-version: latest
-    - name: Configure build environment on Linux x86_64
-      if: runner.arch == 'X64'
+    - name: Configure build environment on Linux
       shell: bash
       run: |
         # initialize Conda
@@ -29,9 +28,19 @@ runs:
         conda update -y -q conda
         echo "$CONDA/bin" >> $GITHUB_PATH
 
-        # install base packages
-        conda install -y -q -c conda-forge gxx_linux-64=11.2 sysroot_linux-64=2.28
-        conda install -y -q python=3.11 cmake make swig mkl=2023 mkl-devel=2023 numpy scipy pytest
+        # install base packages for X86_64
+        if [ "${{ inputs.gpu }}" = "ON" ]; then
+          # TODO: unpin versions for gxx_linux-64 and sysroot_linux-64 and merge it with ARM64 below
+          conda install -y -q -c conda-forge gxx_linux-64=11.2 sysroot_linux-64=2.28
+          conda install -y -q mkl=2023 mkl-devel=2023 
+        fi
+
+        # install base packages for ARM64
+        if [ "${{ inputs.gpu }}" = "ARM64" ]; then
+          conda install -y -q -c conda-forge openblas gxx_linux-aarch64 sysroot_linux-aarch64
+        fi
+
+        conda install -y -q python=3.11 cmake make swig numpy scipy pytest
 
         # install CUDA packages
         if [ "${{ inputs.gpu }}" = "ON" ] && [ "${{ inputs.raft }}" = "OFF" ]; then
@@ -51,7 +60,6 @@ runs:
           conda install -y -q pytorch -c pytorch
         fi
     - name: Build all targets on Linux x86_64
-      if: runner.arch == 'X64'
       shell: bash
       run: |
         eval "$(conda shell.bash hook)"
@@ -67,35 +75,6 @@ runs:
               -DCMAKE_BUILD_TYPE=Release \
               -DBLA_VENDOR=Intel10_64_dyn \
               -DCMAKE_CUDA_FLAGS="-gencode arch=compute_75,code=sm_75" \
-              .
-        make -k -C build -j$(nproc)
-    - name: Configure build environment in Linux aarch64
-      shell: bash
-      if: runner.arch == 'ARM64'
-      run: |
-        # initialize Conda
-        conda config --set solver libmamba
-        conda update -y -q conda
-        echo "$CONDA/bin" >> $GITHUB_PATH
-        conda install -y -q python=3.11 cmake>=3.24.0 make swig numpy scipy pytest
-        conda install -y -q pytorch -c pytorch
-        conda install conda-forge::openblas
-        conda install conda-forge::gxx_linux-aarch64
-        conda install conda-forge::sysroot_linux-aarch64
-    - name: Build all targets on Linux aarch64
-      if: runner.arch == 'ARM64'
-      shell: bash
-      run: |
-        eval "$(conda shell.bash hook)"
-        conda activate 
-        cmake -B build \
-              -DBUILD_TESTING=ON \
-              -DBUILD_SHARED_LIBS=ON \
-              -DFAISS_ENABLE_GPU=OFF \
-              -DFAISS_OPT_LEVEL=${{ inputs.opt_level }} \
-              -DFAISS_ENABLE_C_API=ON \
-              -DPYTHON_EXECUTABLE=$(which python) \
-              -DCMAKE_BUILD_TYPE=Release \
               .
         make -k -C build -j$(nproc)
     - name: C++ tests
