@@ -59,7 +59,7 @@ runs:
         else
           conda install -y -q pytorch -c pytorch
         fi
-    - name: Build all targets on Linux x86_64
+    - name: Build all targets on Linux
       shell: bash
       run: |
         eval "$(conda shell.bash hook)"
