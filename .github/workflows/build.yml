@@ -89,7 +89,7 @@ jobs:
           gpu: ON
           raft: ON
   linux-arm64-SVE-cmake:
-    name: Linux arm64 (cmake)
+    name: Linux arm64 SVE (cmake)
     runs-on: faiss-aws-r8g.large
     continue-on-error: true # non-blocking mode for now
     steps:
