@@ -273,6 +273,6 @@ jobs:
             gh workflow run retry_build.yml |
             --ref ${{ github.ref_name }} |
             -F run_id=${{ github.run_id }}
-      - name: Setup tmate session
+      - name: Setup tmate session # delete this after
         if: failure()
         uses: mxschmitt/action-tmate@v3
