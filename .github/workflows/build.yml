@@ -267,12 +267,12 @@ jobs:
       - name: Start rerun workflow
         env:
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.github_token }}
           GH_DEBUG: api
         run: |
             gh workflow run retry_build.yml \
             --ref ${{ github.ref_name }} \
             -F run_id=${{ github.run_id }}
-      - name: Setup tmate session # delete this after
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate session # delete this after
+      #   if: failure()
+      #   uses: mxschmitt/action-tmate@v3
